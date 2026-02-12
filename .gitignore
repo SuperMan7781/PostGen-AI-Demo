@@ -1,0 +1,9 @@
+# Security: Never upload keys
+.env
+
+# System: Ignore huge folders and cache
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+data/  # Optional: If you don't want to share the CSV
