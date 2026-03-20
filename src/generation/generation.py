@@ -1,6 +1,7 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+from agents.critic import critique_post  # <-- Import the Critic Agent
 
 # 1. Load the keys from your .env file
 load_dotenv()
@@ -27,8 +28,8 @@ def generate_viral_post(topic, viral_examples):
     for i, ex in enumerate(viral_examples):
         examples_text += f"\n--- EXAMPLE {i+1} (Reactions: {ex.get('reactions', 0)}) ---\n{ex.get('text', '')[:600]}...\n"
 
-    # This is the "Prompt Engineering" part
-    prompt = f"""
+    # 1. GENERATOR AGENT: Initial Draft
+    generator_prompt = f"""
     You are a viral content expert for LinkedIn. 
     You write in a punchy, authentic, and engaging style (short sentences, generous spacing).
     
@@ -47,12 +48,41 @@ def generate_viral_post(topic, viral_examples):
     WRITE THE POST NOW:
     """
     
-    # 3. Call the API
     try:
-        response = model.generate_content(prompt)
-        return response.text
+        # Step A: Generate Initial
+        response = model.generate_content(generator_prompt)
+        initial_post = response.text
+        
+        # Step B: CRITIC AGENT: Evaluate Initial
+        critique = critique_post(topic, initial_post, viral_examples)
+        
+        # Step C: REFINER AGENT: Improve initial draft based on critique
+        refine_prompt = f"""
+        You are a highly sought-after LinkedIn Ghostwriter.
+        You take drafts and make them absolute gold for engagement.
+        
+        USER'S TOPIC: "{topic}"
+        
+        --- 📝 INITIAL DRAFT ---
+        {initial_post}
+        
+        --- 📊 STRATEGIST CRITIQUE ---
+        {critique}
+        
+        --- INSTRUCTIONS ---
+        Apply the actionable advice from the Critique Report above to refine and rewrite the initial draft.
+        Ensure the final post is strictly better, holding tighter attention, forming crisper structure, and triggering higher authenticity triggers without losing core context points.
+        
+        WRITE THE REFINED POST NOW:
+        """
+        
+        refine_response = model.generate_content(refine_prompt)
+        refined_post = refine_response.text
+        
+        return initial_post, critique, refined_post
+        
     except Exception as e:
-        return f"❌ AI Error: {str(e)}"
+        return f"❌ AI Error: {str(e)}", "", ""
 
 # Quick Test (Only runs if you run this specific file)
 if __name__ == "__main__":
@@ -63,8 +93,15 @@ if __name__ == "__main__":
         {"text": "Hiring is broken. Here is how I fixed it...", "reactions": 3000}
     ]
     
-    print("🧠 Testing Gemini 2.5 Flash Connection...")
-    result = generate_viral_post("Salary Negotiation", dummy_examples)
+    print("🧠 Testing Multi-Agent Chain (Generarator -> Critic -> Refiner)...")
+    initial, critique, refined = generate_viral_post("Salary Negotiation", dummy_examples)
     print("\n" + "="*40)
-    print(result)
-    print("="*40)
+    print("Draft Post:")
+    print(initial[:200] + "...")
+    print("\n" + "="*40)
+    print("Critique:")
+    print(critique)
+    print("\n" + "="*40)
+    print("Refined Post:")
+    print(refined)
+    print("="*40)

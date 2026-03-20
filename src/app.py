@@ -41,12 +41,24 @@ if generate_btn and topic:
         st.info("⚠️ No exact matches found. Writing from scratch!")
 
     # Generate content
-    with st.spinner("🧠 AI is analyzing patterns and writing..."):
+    with st.spinner("🧠 AI is analyzing patterns & refining drafting..."):
         try:
-            final_post = generate_viral_post(topic, viral_examples)
+            initial_post, critique, final_post = generate_viral_post(topic, viral_examples)
             
             st.success("✨ Your Viral Post is Ready!")
-            st.text_area("Copy this:", value=final_post, height=300)
+            
+            # Use tabs for clean layout
+            tab1, tab2, tab3 = st.tabs(["✨ Refined Post", "📝 Initial Draft", "🔬 Critique Report"])
+            
+            with tab1:
+                st.text_area("Copy this:", value=final_post, height=400)
+                
+            with tab2:
+                st.caption("This was the first draft before critique:")
+                st.markdown(initial_post)
+                
+            with tab3:
+                st.markdown(critique)
             
         except Exception as e:
             st.error(f"Generation Error: {e}")

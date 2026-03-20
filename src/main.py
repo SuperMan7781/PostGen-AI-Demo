@@ -40,12 +40,19 @@ def main():
             print(f"   [{i+1}] Match: {score:.2f} | 👍 {ex['reactions']} Reactions")
 
     # 4. Generate the Post (The "Generation" Step)
-    print("\n🧠 AI is analyzing patterns and writing your post...")
-    final_post = generate_viral_post(topic, viral_examples)
+    print("\n🧠 Running Multi-Agent Workflow (Generate -> Critique -> Refine)...")
+    initial_post, critique, final_post = generate_viral_post(topic, viral_examples)
+
+    # Show Critique
+    if critique:
+        print("\n" + "="*60)
+        print("🔬 STRATEGIST CRITIQUE & FEEDBACK")
+        print("="*60 + "\n")
+        print(critique)
 
     # 5. Display Result
     print("\n" + "="*60)
-    print("✨ YOUR VIRAL POST IS READY ✨")
+    print("✨ YOUR REFINED VIRAL POST IS READY ✨")
     print("="*60 + "\n")
     print(final_post)
     print("\n" + "="*60)
